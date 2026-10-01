@@ -1,0 +1,45 @@
+name: "Terraform CI Pipeline"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: "Terraform Lint, Validate & Plan"
+    runs-on: ubuntu-latest
+
+    steps:
+      # Passo 1: Baixa o código do seu repositório para o agente do GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Passo 2: Instala a CLI do Terraform no agente
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      # Passo 3: Verifica se o código segue o padrão de formatação oficial (Bloqueia se estiver desorganizado)
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      # Passo 4: Inicializa o diretório do Terraform
+      # O parâmetro -backend=false permite rodar o teste sem precisar configurar um bucket S3 real na AWS
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      # Passo 5: Valida a sintaxe dos arquivos .tf (Procura por erros de digitação ou blocos inválidos)
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Passo 6: Gera o plano de execução para garantir que a infraestrutura pode ser montada sem falhas estruturais
+      - name: Terraform Plan
+        run: terraform plan -input=false
